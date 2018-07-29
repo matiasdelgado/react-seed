@@ -1,49 +1,47 @@
 import React from 'react';
-import { getJson } from 'utils/fetch';
+import PropTypes from 'prop-types';
+import Button from '../button';
+import Counter from '../counter';
+import classes from 'utils/classes';
+import { inject, observer } from "mobx-react";
 import links from '../../routes/links';
 import Clickable from '../clickable';
 import styles from './app.scss';
-import classes from 'utils/classes';
 
+@inject('app')
+@observer
 class App extends React.Component {
 	constructor(props) {
 		super(props);
-
 		this.handleClick = this.handleClick.bind(this);
-		this.state = {
-			jokes: [],
-			sample: [],
-			error: ''
-		};
-	}
-
-	componentDidMount() {
-		getJson(links.api.sample)
-			.then(sample => this.setState({ sample }))
-			.catch(error => this.setState({ error }));
-	}
-
-	handleClick() {
-		return getJson(links.chucknorris).then(response =>
-			this.setState({
-				jokes: [response.value, ...this.state.jokes]
-			})
-		);
 	}
 
 	render() {
-		const { jokes, sample, error } = this.state;
-		const jsxJokes = jokes.map((joke, idx) => <Clickable key={idx} content={joke} />);
+		const { loading, samples, error } = this.props.app;
+		const text = (loading && 'loading...') || error;
+		const samplesArray = samples.slice();
 
 		return (
-			<div className={styles.container}>
+			<div className={classes(styles.container, styles.shadow)}>
+				<Counter />
 				<button className={classes(styles.button, styles.shadow)} onClick={this.handleClick}>
-					+
+					Test
 				</button>
-				<div className={styles.jokes}>{jsxJokes}</div>
-				{this.renderApiTest(sample, error)}
+				<div>
+					{!!text && <Button text={text} />}
+					{!text &&
+						samplesArray.map(s =>
+							<div key={s.id}>
+								<Button text={s.description} />
+							</div>
+						)}
+				</div>
 			</div>
 		);
+	}
+
+	handleClick() {
+		this.props.app.fetchSamples();
 	}
 
 	renderApiTest(sample, error) {
@@ -61,5 +59,14 @@ class App extends React.Component {
 		);
 	}
 }
+
+App.propTypes = {
+	app: PropTypes.shape({
+		error: PropTypes.string,
+		fetchSamples: PropTypes.func,
+		loading: PropTypes.bool,
+		samples: PropTypes.object
+	})
+};
 
 export default App;

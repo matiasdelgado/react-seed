@@ -4,6 +4,7 @@
 		"react",
 		"survivejs-kanban"
 	],
+	"plugins": ["transform-decorators-legacy"],
 	"env": {
 		"start": {
 			"presets": [
