@@ -1,5 +1,5 @@
 import { observable, action, runInAction } from "mobx";
-import { getJson } from "../utils/fetch";
+import { getJson } from "utils/fetch";
 import links from "../routes/links";
 
 class AppStore {

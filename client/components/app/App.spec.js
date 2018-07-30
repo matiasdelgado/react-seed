@@ -1,80 +1,68 @@
 import React from 'react';
 import ShallowRenderer from 'react-test-renderer/shallow';
-import { shallow, mount } from 'enzyme';
-
-import { getJson } from 'utils/fetch';
-import Clickable from '../clickable';
-import links from '../../routes/links';
+import { shallow } from 'enzyme';
+import { observable } from 'mobx';
 import App from './App';
 
-jest.mock('utils/fetch', () => ({
-	getJson: jest.fn(url => new Promise((resolve, reject) => (url ? resolve({ value: 'another joke' }) : reject())))
-}));
+const samples = observable([
+	{ id: 1, description: 'sample #1' },
+	{ id: 2, description: 'sample #2' },
+	{ id: 3, description: 'sample #3' }
+]);
+
+const appState = {
+	error: '',
+	fetchSamples: jest.fn(),
+	loading: false,
+	samples
+};
+
+const PROPS = { app: appState };
 
 describe('<App/>', () => {
-	it('snapshot', () => {
-		const renderer = new ShallowRenderer();
-		const tree = renderer.render(<App />);
+	const renderer = new ShallowRenderer();
+
+	it('render no samples, no loading and no error', () => {
+		const tree = renderer.render(<App {...PROPS} />);
+
+		expect(tree).toMatchSnapshot();
+	});
+
+	it('render samples', () => {
+		const tree = renderer.render(<App {...PROPS} samples={samples} />);
+
+		expect(tree).toMatchSnapshot();
+	});
+
+	it('render loading...', () => {
+		const tree = renderer.render(<App {...PROPS} loading />);
+
+		expect(tree).toMatchSnapshot();
+	});
+
+	it('render error', () => {
+		const tree = renderer.render(<App {...PROPS} error="something went wrong!" />);
+
+		expect(tree).toMatchSnapshot();
+	});
+
+	it('render loading before samples', () => {
+		const tree = renderer.render(<App {...PROPS} samples={samples} loading />);
+
+		expect(tree).toMatchSnapshot();
+	});
+
+	it('render error before samples', () => {
+		const tree = renderer.render(<App {...PROPS} samples={samples} error="error!" />);
+
 		expect(tree).toMatchSnapshot();
 	});
 });
 
-describe('App - button onClick', () => {
-	const app = shallow(<App />);
+test('click on button should call props.fetchSamples func', () => {
+	const app = shallow(<App {...PROPS} />);
 
-	beforeEach(() => {
-		getJson.mockImplementation(() => Promise.resolve({ value: 'another joke' }));
-		app.find('button').simulate('click');
-	});
+	app.find('button').simulate('click');
 
-	it('should call ChuckNorris api', () => {
-		expect(getJson).toBeCalledWith(links.chucknorris);
-	});
-
-	it('should keep previous jokes', () => {
-		expect(app.state().jokes.length).toBe(2);
-	});
-
-	it('should update <Clickable> children', () => {
-		return app
-			.instance()
-			.handleClick()
-			.then(() =>
-				expect(
-					app
-						.find(Clickable)
-						.first()
-						.props().content
-				).toEqual('another joke')
-			);
-	});
-});
-
-describe('App - mounting', () => {
-	describe('server request succeeded', () => {
-		const sample = [{ id: 1 }, { id: 2 }];
-		getJson.mockImplementation(() => Promise.resolve(sample));
-		const tree = mount(<App />);
-
-		it('should call getJson', () => {
-			expect(getJson).toBeCalledWith(links.api.sample);
-		});
-
-		it('should update state.sample', () => {
-			expect(tree.instance().state).toMatchObject({ sample });
-		});
-	});
-
-	describe('server request error', () => {
-		getJson.mockImplementation(() => Promise.reject({ code: 500 }));
-		const app = mount(<App />);
-
-		it('should update state.error', () => {
-			expect(app.instance().state).toMatchObject({ error: { code: 500 } });
-		});
-
-		it('should not have any joke', () => {
-			expect(app.state().jokes).toEqual([]);
-		});
-	});
+	expect(PROPS.app.fetchSamples).toBeCalled();
 });

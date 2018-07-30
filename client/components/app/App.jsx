@@ -3,13 +3,8 @@ import PropTypes from 'prop-types';
 import Button from '../button';
 import Counter from '../counter';
 import classes from 'utils/classes';
-import { inject, observer } from "mobx-react";
-import links from '../../routes/links';
-import Clickable from '../clickable';
-import styles from './app.scss';
+import styles from './styles.scss';
 
-@inject('app')
-@observer
 class App extends React.Component {
 	constructor(props) {
 		super(props);
@@ -42,21 +37,6 @@ class App extends React.Component {
 
 	handleClick() {
 		this.props.app.fetchSamples();
-	}
-
-	renderApiTest(sample, error) {
-		const response = JSON.stringify(sample.length ? sample : error);
-
-		return (
-			<Clickable
-				content={
-					<div className={styles.apiResponse}>
-						<span>~{links.api.sample} response:</span>
-						<div>{response}</div>
-					</div>
-				}
-			/>
-		);
 	}
 }
 
